@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= ({ dashboard: 'Indicadores', patients: 'Pacientes', appointments: 'Agenda', myAppointments: 'Mis citas', consultations: 'Consulta médica', history: 'Historial clínico', prescriptions: 'Recetas digitales', inventory: 'Inventario' })[section] %> | Farmacia Rosita</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="/stylesheets/portal.css">
+</head>
+<body class="portal-page">
+    <%- include('navbar'); %>
+    <div class="portal-frame">
+        <aside class="portal-sidebar" aria-label="Módulos del sistema">
+            <% if (currentAccount.role === 'USER') { %>
+                <p class="sidebar-label">Mi salud</p>
+                <a class="<%= section === 'myAppointments' ? 'active' : '' %>" href="/my-appointments"><span>01</span> Mis citas</a>
+                <div class="sidebar-foot"><span class="role-indicator"></span>Paciente</div>
+            <% } else { %>
+                <p class="sidebar-label">Sistema clínico</p>
+                <a class="<%= section === 'dashboard' ? 'active' : '' %>" href="/dashboard"><span>01</span> Indicadores</a>
+                <a class="<%= section === 'patients' ? 'active' : '' %>" href="/patients"><span>02</span> Pacientes</a>
+                <a class="<%= section === 'appointments' ? 'active' : '' %>" href="/appointments"><span>03</span> Agenda</a>
+                <a class="<%= section === 'consultations' ? 'active' : '' %>" href="/consultations"><span>04</span> Consulta médica</a>
+                <a class="<%= section === 'history' ? 'active' : '' %>" href="/history"><span>05</span> Historial clínico</a>
+                <a class="<%= section === 'prescriptions' ? 'active' : '' %>" href="/prescriptions"><span>06</span> Recetas digitales</a>
+                <a class="<%= section === 'inventory' ? 'active' : '' %>" href="/inventory"><span>07</span> Inventario</a>
+                <div class="sidebar-foot"><span class="role-indicator"></span><%= currentAccount.role === 'MEDICO' ? 'Personal médico' : 'Administración' %></div>
+            <% } %>
+        </aside>
+
+        <main class="portal-main">
+            <header class="portal-heading">
+                <div>
+                    <p class="eyebrow">Farmacia Rosita / Sistema</p>
+                    <h1><%= ({ dashboard: 'Indicadores', patients: 'Pacientes', appointments: 'Agenda de citas', myAppointments: 'Mis citas', consultations: 'Consulta médica', history: 'Historial clínico', prescriptions: 'Recetas digitales', inventory: 'Inventario de medicamentos' })[section] %></h1>
+                </div>
+                <span class="today-date"><%= new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+            </header>
+
+            <% if (notice) { %><p class="portal-message success" role="status"><%= notice %></p><% } %>
+            <% if (error) { %><p class="portal-message failure" role="alert"><%= error %></p><% } %>
+
+            <% if (section === 'myAppointments') { %>
+                <section class="portal-panel form-panel wide-form">
+                    <div class="panel-heading"><div><p class="eyebrow">Nueva reserva</p><h2>Agendar una cita</h2></div><span>Atención de lunes a viernes, 08:00 a 20:00</span></div>
+                    <% if (!data.doctors.length) { %><p class="empty-state">En este momento no hay médicos disponibles para agendar.</p><% } else { %>
+                        <form action="/my-appointments" method="post" class="data-form horizontal-form">
+                            <label>Médico<select name="doctorEmail" required><option value="">Selecciona un médico</option><% data.doctors.forEach((doctor) => { %><option value="<%= doctor.email %>"><%= doctor.name %></option><% }) %></select></label>
+                            <label>Fecha y hora<input type="datetime-local" name="startsAt" required></label>
+                            <label>Duración<select name="durationMinutes"><option value="30">30 minutos</option><option value="15">15 minutos</option><option value="45">45 minutos</option><option value="60">60 minutos</option></select></label>
+                            <label>Motivo<input name="reason" maxlength="300" placeholder="Motivo de consulta"></label>
+                            <button class="button-primary" type="submit">Agendar</button>
+                        </form>
+                    <% } %>
+                </section>
+                <section class="portal-panel table-panel">
+                    <div class="panel-heading"><div><p class="eyebrow">Tu agenda</p><h2><%= data.appointments.length %> citas</h2></div></div>
+                    <% if (!data.appointments.length) { %><p class="empty-state">Aún no tienes citas. Puedes reservar una desde el formulario.</p><% } else { %>
+                        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Médico</th><th>Motivo</th><th>Estado</th><th></th></tr></thead><tbody>
+                            <% data.appointments.forEach((appointment) => { %><tr><td><strong><%= appointment.startsAt.toLocaleDateString('es-MX') %></strong><small><%= appointment.startsAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) %> · <%= appointment.durationMinutes %> min</small></td><td><%= appointment.doctor %></td><td><%= appointment.reason || '—' %></td><td><span class="status-pill <%= appointment.status === 'Programada' ? 'status-open' : appointment.status === 'Completada' ? 'status-done' : 'status-cancelled' %>"><%= appointment.status %></span></td><td><% if (appointment.status === 'Programada' && appointment.startsAt > new Date()) { %><form action="/my-appointments/<%= appointment._id %>/cancel" method="post"><button class="text-danger" type="submit">Cancelar cita</button></form><% } %></td></tr><% }) %>
+                        </tbody></table></div>
+                    <% } %>
+                </section>
+            <% } %>
+
+            <% if (section === 'dashboard') { %>
+                <section class="metric-grid" aria-label="Resumen">
+                    <article class="metric"><span>Pacientes activos</span><strong><%= data.metrics.patientCount %></strong><small>Expedientes registrados</small></article>
+                    <article class="metric"><span>Citas próximas</span><strong><%= data.metrics.appointmentCount %></strong><small>Programadas desde hoy</small></article>
+                    <article class="metric"><span>Consultas</span><strong><%= data.metrics.consultationCount %></strong><small>Atenciones registradas</small></article>
+                    <article class="metric metric-alert"><span>Alertas de inventario</span><strong><%= data.metrics.lowStock + data.metrics.expiring %></strong><small><%= data.metrics.lowStock %> stock bajo · <%= data.metrics.expiring %> por caducar</small></article>
+                </section>
+                <section class="dashboard-grid">
+                    <article class="portal-panel chart-panel">
+                        <div class="panel-heading"><div><p class="eyebrow">Actividad clínica</p><h2>Consultas recientes</h2></div><span>Últimos 6 meses</span></div>
+                        <% const chartMax = Math.max(1, ...data.chart.map((item) => item.count)); %>
+                        <div class="bar-chart" role="img" aria-label="Consultas por mes">
+                            <% data.chart.forEach((item) => { %>
+                                <div class="chart-column"><span class="bar-count"><%= item.count %></span><div class="bar-track"><span style="height: <%= Math.max(item.count ? 8 : 0, item.count / chartMax * 100) %>%"></span></div><span class="bar-label"><%= item.label %></span></div>
+                            <% }) %>
+                        </div>
+                    </article>
+                    <article class="portal-panel">
+                        <div class="panel-heading"><div><p class="eyebrow">Agenda próxima</p><h2>Siguientes 7 días</h2></div><a href="/appointments">Ver agenda</a></div>
+                        <% if (!data.upcoming.length) { %><p class="empty-state">No hay citas programadas para los próximos días.</p><% } %>
+                        <% data.upcoming.forEach((appointment) => { %>
+                            <div class="compact-row"><div><strong><%= appointment.patient ? appointment.patient.firstName + ' ' + appointment.patient.lastName : 'Paciente archivado' %></strong><small><%= appointment.doctor %></small></div><time><%= appointment.startsAt.toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) %></time></div>
+                        <% }) %>
+                    </article>
+                    <article class="portal-panel">
+                        <div class="panel-heading"><div><p class="eyebrow">Existencias</p><h2>Stock bajo</h2></div><a href="/inventory">Inventario</a></div>
+                        <% if (!data.lowStockItems.length) { %><p class="empty-state">Sin alertas de stock bajo.</p><% } %>
+                        <% data.lowStockItems.forEach((item) => { %><div class="alert-row"><span><%= item.name %> <small>Lote <%= item.lot || 'sin lote' %></small></span><strong><%= item.stock %> / <%= item.minimumStock %></strong></div><% }) %>
+                    </article>
+                    <article class="portal-panel">
+                        <div class="panel-heading"><div><p class="eyebrow">Caducidad</p><h2>Próximos 30 días</h2></div><a href="/inventory">Revisar</a></div>
+                        <% if (!data.expiringItems.length) { %><p class="empty-state">Sin medicamentos próximos a caducar.</p><% } %>
+                        <% data.expiringItems.forEach((item) => { %><div class="alert-row"><span><%= item.name %> <small>Lote <%= item.lot || 'sin lote' %></small></span><strong><%= item.expiresAt ? item.expiresAt.toLocaleDateString('es-MX') : 'Sin fecha' %></strong></div><% }) %>
+                    </article>
+                </section>
+            <% } %>
+
+            <% if (section === 'patients') { %>
+                <section class="workspace-grid">
+                    <article class="portal-panel form-panel">
+                        <div class="panel-heading"><div><p class="eyebrow">Expediente</p><h2><%= data.selectedPatient ? 'Editar paciente' : 'Registrar paciente' %></h2></div></div>
+                        <form action="/patients" method="post" class="data-form">
+                            <% if (data.selectedPatient) { %><input type="hidden" name="id" value="<%= data.selectedPatient._id %>"><% } %>
+                            <div class="field-pair"><label>Nombre<input name="firstName" value="<%= data.selectedPatient?.firstName || '' %>" required></label><label>Apellidos<input name="lastName" value="<%= data.selectedPatient?.lastName || '' %>" required></label></div>
+                            <div class="field-pair"><label>Fecha de nacimiento<input type="date" name="birthDate" value="<%= data.selectedPatient?.birthDate ? new Date(data.selectedPatient.birthDate).toISOString().slice(0, 10) : '' %>"></label><label>Teléfono<input name="phone" type="tel" value="<%= data.selectedPatient?.phone || '' %>"></label></div>
+                            <label>Correo electrónico<input name="email" type="email" value="<%= data.selectedPatient?.email || '' %>"></label>
+                            <label>Domicilio<input name="address" value="<%= data.selectedPatient?.address || '' %>"></label>
+                            <label>Alergias conocidas<textarea name="allergies" rows="2"><%= data.selectedPatient?.allergies || '' %></textarea></label>
+                            <label>Notas del expediente<textarea name="notes" rows="3"><%= data.selectedPatient?.notes || '' %></textarea></label>
+                            <div class="form-actions"><button class="button-primary" type="submit"><%= data.selectedPatient ? 'Guardar cambios' : 'Crear expediente' %></button><% if (data.selectedPatient) { %><a class="button-quiet" href="/patients">Cancelar</a><% } %></div>
+                        </form>
+                    </article>
+                    <article class="portal-panel table-panel">
+                        <div class="panel-heading"><div><p class="eyebrow">Expedientes activos</p><h2><%= data.patients.length %> pacientes</h2></div><form action="/patients" method="get" class="patient-search"><label class="visually-hidden" for="patient-query">Buscar pacientes</label><input id="patient-query" name="q" value="<%= data.search || '' %>" placeholder="Nombre, teléfono o correo"><button type="submit" aria-label="Buscar">Buscar</button></form></div>
+                        <% if (!data.patients.length) { %><p class="empty-state">Aún no hay pacientes. Registra el primero desde el formulario.</p><% } else { %>
+                            <div class="table-wrap"><table><thead><tr><th>Paciente</th><th>Contacto</th><th></th></tr></thead><tbody>
+                                <% data.patients.forEach((patient) => { %><tr><td><strong><%= patient.lastName %>, <%= patient.firstName %></strong><small><%= patient.birthDate ? new Date(patient.birthDate).toLocaleDateString('es-MX') : 'Sin fecha de nacimiento' %></small></td><td><%= patient.phone || patient.email || 'Sin contacto' %></td><td><div class="row-actions"><a href="/history?patient=<%= patient._id %>">Historial</a><a href="/patients?edit=<%= patient._id %>">Editar</a><form action="/patients/<%= patient._id %>/delete" method="post"><button class="text-danger" type="submit">Archivar</button></form></div></td></tr><% }) %>
+                            </tbody></table></div>
+                        <% } %>
+                    </article>
+                </section>
+            <% } %>
+
+            <% if (section === 'appointments') { %>
+                <section class="portal-panel form-panel wide-form">
+                    <div class="panel-heading"><div><p class="eyebrow">Nueva reserva</p><h2>Agendar cita</h2></div><span>Los horarios del mismo médico no pueden cruzarse.</span></div>
+                    <% if (!data.patients.length) { %><p class="empty-state">Primero registra un paciente para agendar una cita.</p><% } else { %>
+                        <form action="/appointments" method="post" class="data-form horizontal-form">
+                            <label>Paciente<select name="patientId" required><option value="">Selecciona un paciente</option><% data.patients.forEach((patient) => { %><option value="<%= patient._id %>"><%= patient.lastName %>, <%= patient.firstName %></option><% }) %></select></label>
+                            <label>Fecha y hora<input type="datetime-local" name="startsAt" required></label>
+                            <label>Duración<select name="durationMinutes"><option value="30">30 minutos</option><option value="15">15 minutos</option><option value="45">45 minutos</option><option value="60">60 minutos</option></select></label>
+                            <label>Motivo<input name="reason" placeholder="Motivo de consulta"></label>
+                            <button class="button-primary" type="submit">Agendar</button>
+                        </form>
+                    <% } %>
+                </section>
+                <section class="portal-panel table-panel">
+                    <div class="panel-heading"><div><p class="eyebrow">Todas las reservas</p><h2>Agenda</h2></div></div>
+                    <% if (!data.appointments.length) { %><p class="empty-state">No hay citas registradas.</p><% } else { %><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Paciente</th><th>Médico</th><th>Motivo</th><th>Estado</th><th></th></tr></thead><tbody>
+                        <% data.appointments.forEach((appointment) => { %><tr><td><strong><%= appointment.startsAt.toLocaleDateString('es-MX') %></strong><small><%= appointment.startsAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) %> · <%= appointment.durationMinutes %> min</small></td><td><%= appointment.patient ? appointment.patient.firstName + ' ' + appointment.patient.lastName : 'Paciente archivado' %></td><td><%= appointment.doctor %></td><td><%= appointment.reason || '—' %></td><td><span class="status-pill <%= appointment.status === 'Programada' ? 'status-open' : appointment.status === 'Completada' ? 'status-done' : 'status-cancelled' %>"><%= appointment.status %></span></td><td><% if (appointment.status === 'Programada') { %><div class="row-actions"><a href="/consultations?appointment=<%= appointment._id %>">Atender</a><form action="/appointments/<%= appointment._id %>/status" method="post"><input type="hidden" name="status" value="Completada"><button class="text-action" type="submit">Completar</button></form><form action="/appointments/<%= appointment._id %>/status" method="post"><input type="hidden" name="status" value="Cancelada"><button class="text-danger" type="submit">Cancelar</button></form></div><% } %></td></tr><% }) %>
+                    </tbody></table></div><% } %>
+                </section>
+            <% } %>
+
+            <% if (section === 'consultations') { %>
+                <section class="portal-panel form-panel wide-form">
+                    <div class="panel-heading"><div><p class="eyebrow">Atención</p><h2>Registrar consulta</h2></div><span>La información se agrega al historial clínico.</span></div>
+                    <% if (!data.patients.length) { %><p class="empty-state">Registra un paciente antes de iniciar la consulta.</p><% } else { %>
+                        <form action="/consultations" method="post" class="data-form">
+                            <div class="field-pair"><label>Paciente<select name="patientId" required><option value="">Selecciona</option><% data.patients.forEach((patient) => { %><option value="<%= patient._id %>" <%= String(patient._id) === String(data.selectedAppointment?.patient?._id) ? 'selected' : '' %>><%= patient.lastName %>, <%= patient.firstName %></option><% }) %></select></label><label>Cita relacionada<select name="appointmentId"><option value="">Sin cita vinculada</option><% data.appointments.forEach((appointment) => { %><option value="<%= appointment._id %>" <%= String(appointment._id) === String(data.selectedAppointment?._id) ? 'selected' : '' %>><%= appointment.patient?.firstName %> <%= appointment.patient?.lastName %> · <%= appointment.startsAt.toLocaleString('es-MX') %></option><% }) %></select></label></div>
+                            <div class="field-pair"><label>Motivo de consulta<input name="reason"></label><label>Diagnóstico<input name="diagnosis" required></label></div>
+                            <fieldset><legend>Signos vitales</legend><div class="vitals-grid"><label>Presión arterial<input name="bloodPressure" placeholder="120/80 mmHg"></label><label>Frecuencia cardiaca<input name="heartRate" type="number" min="0" placeholder="lpm"></label><label>Temperatura<input name="temperature" type="number" min="0" step="0.1" placeholder="°C"></label><label>Peso<input name="weight" type="number" min="0" step="0.1" placeholder="kg"></label></div></fieldset>
+                            <label>Tratamiento e indicaciones<textarea name="treatment" rows="3"></textarea></label><label>Notas<textarea name="notes" rows="2"></textarea></label>
+                            <button class="button-primary" type="submit">Guardar consulta</button>
+                        </form>
+                    <% } %>
+                </section>
+                <section class="portal-panel table-panel"><div class="panel-heading"><div><p class="eyebrow">Actividad reciente</p><h2>Consultas registradas</h2></div><a href="/history">Abrir historial</a></div>
+                    <% if (!data.consultations.length) { %><p class="empty-state">Todavía no hay consultas registradas.</p><% } %>
+                    <% data.consultations.forEach((consultation) => { %><article class="record-row"><div><strong><%= consultation.patient ? consultation.patient.firstName + ' ' + consultation.patient.lastName : 'Paciente archivado' %></strong><small><%= consultation.date.toLocaleString('es-MX') %> · <%= consultation.doctor %></small></div><p><b><%= consultation.diagnosis %></b><%= consultation.treatment ? ' · ' + consultation.treatment : '' %></p><a href="/history?patient=<%= consultation.patient?._id %>">Ver expediente</a></article><% }) %>
+                </section>
+            <% } %>
+
+            <% if (section === 'history') { %>
+                <section class="portal-panel filter-panel"><form method="get" action="/history" class="filter-form"><label>Expediente del paciente<select name="patient"><option value="">Todos los pacientes</option><% data.patients.forEach((patient) => { %><option value="<%= patient._id %>" <%= String(patient._id) === String(data.selectedPatient) ? 'selected' : '' %>><%= patient.lastName %>, <%= patient.firstName %><%= patient.active ? '' : ' (archivado)' %></option><% }) %></select></label><button class="button-primary" type="submit">Consultar</button><a class="button-quiet" href="/history">Limpiar</a></form></section>
+                <section class="history-grid"><article class="portal-panel"><div class="panel-heading"><div><p class="eyebrow">Expediente médico</p><h2><%= data.consultations.length %> consultas</h2></div></div>
+                    <% if (!data.consultations.length) { %><p class="empty-state">No hay consultas para este filtro.</p><% } %>
+                    <% data.consultations.forEach((consultation) => { %><article class="history-entry"><time><%= consultation.date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) %></time><h3><%= consultation.patient ? consultation.patient.firstName + ' ' + consultation.patient.lastName : 'Paciente archivado' %></h3><p class="record-meta"><%= consultation.doctor %><%= consultation.reason ? ' · ' + consultation.reason : '' %></p><dl class="clinical-data"><div><dt>Diagnóstico</dt><dd><%= consultation.diagnosis %></dd></div><% if (consultation.bloodPressure || consultation.heartRate || consultation.temperature || consultation.weight) { %><div><dt>Signos vitales</dt><dd><%= [consultation.bloodPressure, consultation.heartRate ? consultation.heartRate + ' lpm' : '', consultation.temperature ? consultation.temperature + ' °C' : '', consultation.weight ? consultation.weight + ' kg' : ''].filter(Boolean).join(' · ') %></dd></div><% } %><% if (consultation.treatment) { %><div><dt>Tratamiento</dt><dd><%= consultation.treatment %></dd></div><% } %><% if (consultation.notes) { %><div><dt>Notas</dt><dd><%= consultation.notes %></dd></div><% } %></dl></article><% }) %>
+                </article><article class="portal-panel"><div class="panel-heading"><div><p class="eyebrow">Prescripciones</p><h2><%= data.prescriptions.length %> recetas</h2></div><a href="/prescriptions">Crear receta</a></div>
+                    <% if (!data.prescriptions.length) { %><p class="empty-state">No hay recetas en este expediente.</p><% } %>
+                    <% data.prescriptions.forEach((prescription) => { %><article class="prescription-entry"><time><%= prescription.issuedAt.toLocaleDateString('es-MX') %></time><h3><%= prescription.patient ? prescription.patient.firstName + ' ' + prescription.patient.lastName : 'Paciente archivado' %></h3><p class="record-meta"><%= prescription.doctor %></p><% prescription.items.forEach((item) => { %><p class="rx-line"><b><%= item.medication %></b><span><%= item.dose %> · <%= item.frequency %> · <%= item.duration %></span><% if (item.instructions) { %><small><%= item.instructions %></small><% } %></p><% }) %><% if (prescription.notes) { %><p><%= prescription.notes %></p><% } %></article><% }) %>
+                </article></section>
+            <% } %>
+
+            <% if (section === 'prescriptions') { %>
+                <section class="workspace-grid">
+                    <article class="portal-panel form-panel"><div class="panel-heading"><div><p class="eyebrow">Prescripción</p><h2>Nueva receta</h2></div></div>
+                        <% if (!data.patients.length) { %><p class="empty-state">Registra un paciente para emitir una receta.</p><% } else { %><form action="/prescriptions" method="post" class="data-form" id="prescription-form">
+                            <label>Paciente<select name="patientId" required><option value="">Selecciona</option><% data.patients.forEach((patient) => { %><option value="<%= patient._id %>"><%= patient.lastName %>, <%= patient.firstName %></option><% }) %></select></label>
+                            <label>Consulta relacionada<select name="consultationId"><option value="">Sin consulta vinculada</option><% data.consultations.forEach((consultation) => { %><option value="<%= consultation._id %>"><%= consultation.patient?.firstName %> <%= consultation.patient?.lastName %> · <%= consultation.date.toLocaleDateString('es-MX') %></option><% }) %></select></label>
+                            <div id="prescription-items"><div class="rx-form-row"><label>Medicamento<input name="medication" required></label><label>Dosis<input name="dose" placeholder="500 mg" required></label><label>Frecuencia<input name="frequency" placeholder="Cada 8 horas" required></label><label>Duración<input name="duration" placeholder="5 días" required></label><label>Indicaciones<input name="instructions"></label></div></div>
+                            <button class="button-quiet add-rx" type="button" id="add-prescription-item">+ Añadir medicamento</button>
+                            <label>Indicaciones generales<textarea name="notes" rows="3"></textarea></label><button class="button-primary" type="submit">Guardar receta digital</button>
+                        </form><% } %>
+                    </article>
+                    <article class="portal-panel table-panel"><div class="panel-heading"><div><p class="eyebrow">Archivo</p><h2>Recetas emitidas</h2></div></div>
+                        <% if (!data.prescriptions.length) { %><p class="empty-state">No hay recetas emitidas.</p><% } %><% data.prescriptions.forEach((prescription) => { %><article class="prescription-entry"><time><%= prescription.issuedAt.toLocaleDateString('es-MX') %></time><h3><%= prescription.patient ? prescription.patient.firstName + ' ' + prescription.patient.lastName : 'Paciente archivado' %></h3><p class="record-meta">Prescrita por <%= prescription.doctor %></p><% prescription.items.forEach((item) => { %><p class="rx-line"><b><%= item.medication %></b><span><%= item.dose %> · <%= item.frequency %> · <%= item.duration %></span><% if (item.instructions) { %><small><%= item.instructions %></small><% } %></p><% }) %><% if (prescription.notes) { %><p><%= prescription.notes %></p><% } %><a href="/history?patient=<%= prescription.patient?._id %>">Abrir expediente</a></article><% }) %>
+                    </article>
+                </section>
+                <script>
+                    document.getElementById('add-prescription-item')?.addEventListener('click', () => {
+                        const row = document.querySelector('.rx-form-row').cloneNode(true);
+                        row.querySelectorAll('input').forEach((input) => { input.value = ''; input.required = input.name !== 'instructions'; });
+                        document.getElementById('prescription-items').appendChild(row);
+                    });
+                </script>
+            <% } %>
+
+            <% if (section === 'inventory') { %>
+                <% if (data.canManage) { %><section class="portal-panel form-panel wide-form"><div class="panel-heading"><div><p class="eyebrow">Administración</p><h2>Agregar medicamento y lote</h2></div><span>Los avisos se activan al llegar al mínimo o dentro de 30 días de caducar.</span></div>
+                    <form action="/inventory" method="post" class="data-form inventory-form"><label>Medicamento<input name="name" required></label><label>Principio activo<input name="activeIngredient"></label><label>Presentación<input name="presentation" placeholder="Tabletas, 20 pzas"></label><label>Lote<input name="lot" required></label><label>Existencias<input name="stock" type="number" min="0" required></label><label>Mínimo de stock<input name="minimumStock" type="number" min="0" value="10"></label><label>Caducidad<input name="expiresAt" type="date"></label><label>Precio unitario<input name="price" type="number" min="0" step="0.01"></label><button class="button-primary" type="submit">Agregar al inventario</button></form>
+                </section><% } else { %><p class="portal-message info">Consulta de existencias. Solo administración puede modificar el inventario.</p><% } %>
+                <section class="portal-panel table-panel"><div class="panel-heading"><div><p class="eyebrow">Control de lotes</p><h2><%= data.medications.length %> productos</h2></div></div>
+                    <% if (!data.medications.length) { %><p class="empty-state">Inventario vacío.</p><% } else { %><div class="table-wrap"><table><thead><tr><th>Medicamento</th><th>Lote</th><th>Existencias</th><th>Caducidad</th><th>Estado</th><% if (data.canManage) { %><th>Actualizar</th><% } %></tr></thead><tbody>
+                        <% data.medications.forEach((item) => { const expired = item.expiresAt && item.expiresAt <= new Date(); const expiringSoon = item.expiresAt && !expired && item.expiresAt <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); const isLow = item.stock <= item.minimumStock; %><tr><td><strong><%= item.name %></strong><small><%= [item.activeIngredient, item.presentation].filter(Boolean).join(' · ') %></small></td><td><%= item.lot || '—' %></td><td><strong><%= item.stock %></strong><small>Mínimo <%= item.minimumStock %></small></td><td><%= item.expiresAt ? item.expiresAt.toLocaleDateString('es-MX') : 'Sin fecha' %></td><td><% if (expired) { %><span class="status-pill status-cancelled">Caducado</span><% } else if (isLow) { %><span class="status-pill status-cancelled">Stock bajo</span><% } else if (expiringSoon) { %><span class="status-pill status-open">Por caducar</span><% } else { %><span class="status-pill status-done">En rango</span><% } %></td><% if (data.canManage) { %><td><form action="/inventory" method="post" class="stock-form"><input type="hidden" name="id" value="<%= item._id %>"><input type="hidden" name="name" value="<%= item.name %>"><input type="hidden" name="activeIngredient" value="<%= item.activeIngredient %>"><input type="hidden" name="presentation" value="<%= item.presentation %>"><input type="hidden" name="lot" value="<%= item.lot %>"><input type="hidden" name="price" value="<%= item.price %>"><label class="visually-hidden" for="stock-<%= item._id %>">Existencias de <%= item.name %></label><input id="stock-<%= item._id %>" name="stock" type="number" min="0" value="<%= item.stock %>" required><label class="visually-hidden" for="minimum-<%= item._id %>">Mínimo de <%= item.name %></label><input id="minimum-<%= item._id %>" name="minimumStock" type="number" min="0" value="<%= item.minimumStock %>" required><label class="visually-hidden" for="expiry-<%= item._id %>">Caducidad de <%= item.name %></label><input id="expiry-<%= item._id %>" name="expiresAt" type="date" value="<%= item.expiresAt ? new Date(item.expiresAt).toISOString().slice(0, 10) : '' %>"><button class="button-small" type="submit">Guardar</button></form><form action="/inventory/<%= item._id %>/delete" method="post"><button class="text-danger" type="submit">Eliminar lote</button></form></td><% } %></tr><% }) %>
+                    </tbody></table></div><% } %>
+                </section>
+            <% } %>
+        </main>
+    </div>
+</body>
+</html>

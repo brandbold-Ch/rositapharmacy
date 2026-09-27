@@ -1,0 +1,26 @@
+<nav class="navbar" aria-label="Navegación principal">
+    <a class="brand" href="/" aria-label="Farmacia Rosita, inicio">
+        <img src="/images/logo.jpg" alt="">
+        <span>Farmacia Rosita</span>
+    </a>
+    <div class="nav-links">
+        <a href="/">Inicio</a>
+        <a href="/about">Nosotros</a>
+        <a href="/services">Servicios</a>
+        <a href="/contact">Contacto</a>
+        <% if (currentAccount && ['MEDICO', 'ADMINISTRATOR'].includes(currentAccount.role)) { %>
+            <a href="/dashboard">Sistema</a>
+        <% } else if (currentAccount?.role === 'USER') { %>
+            <a href="/my-appointments">Mis citas</a>
+        <% } %>
+    </div>
+    <div class="nav-account">
+        <% if (isAuthenticated) { %>
+            <span class="nav-user"><%= currentAccount.name %></span>
+            <form action="/logout" method="post"><button type="submit" class="nav-button">Cerrar sesión</button></form>
+        <% } else { %>
+            <a href="/login">Iniciar sesión</a>
+            <a class="nav-register" href="/register">Crear cuenta</a>
+        <% } %>
+    </div>
+</nav>

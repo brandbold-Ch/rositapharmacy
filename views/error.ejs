@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= message %> | Farmacia Rosita</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+<body class="site-page">
+    <%- include('navbar'); %>
+    <main class="error-page">
+        <p class="eyebrow">Error <%= error.status || 500 %></p>
+        <h1><%= message %></h1>
+        <p>No pudimos encontrar lo que buscas.</p>
+        <a class="primary-link" href="/">Volver al inicio</a>
+    </main>
+    <%- include('footer'); %>
+</body>
+</html>

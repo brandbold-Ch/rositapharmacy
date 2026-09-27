@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmacia Rosita - Inicio</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <style>
+        .card-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin: 20px;
+        }
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            flex: 1 1 240px;
+            max-width: 350px;
+            text-align: center;
+            padding: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .card img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .card h3 {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<%- include('navbar'); %>
+
+<main>
+    <div class="card-container">
+        <div class="card">
+            <span class="service-number">01</span>
+            <h3>Medicamentos</h3>
+            <p>Amplia variedad de medicamentos para todas tus necesidades de salud.</p>
+        </div>
+        <div class="card">
+            <span class="service-number">02</span>
+            <h3>Cuidado Personal</h3>
+            <p>Productos de cuidado personal para mejorar tu bienestar diario.</p>
+        </div>
+        <div class="card">
+            <span class="service-number">03</span>
+            <h3>Asesoría Profesional</h3>
+            <p>Orientación en temas de salud para ti y tu familia.</p>
+        </div>
+    </div>
+</main>
+    <%- include('footer'); %>
+</body>
+</html>

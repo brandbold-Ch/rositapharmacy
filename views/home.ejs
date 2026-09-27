@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmacia Rosita | Tu salud, cerca de casa</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+<body class="site-page">
+    <%- include('navbar'); %>
+    <main>
+        <section class="home-hero">
+            <p class="eyebrow">Farmacia Rosita · Saltillo, Coahuila</p>
+            <h1>Tu salud, cerca de casa.</h1>
+            <p class="hero-copy">Medicamentos, cuidado personal y orientación profesional para acompañarte todos los días.</p>
+            <a class="primary-link" href="/services">Conoce nuestros servicios</a>
+        </section>
+        <section class="home-services" aria-labelledby="services-heading">
+            <div class="section-heading">
+                <p class="eyebrow">Estamos para ayudarte</p>
+                <h2 id="services-heading">Atención que cuida de ti</h2>
+            </div>
+            <div class="service-grid">
+                <article class="service-item">
+                    <span class="service-number">01</span>
+                    <h3>Medicamentos</h3>
+                    <p>Encuentra productos para el cuidado de tu salud y la de tu familia.</p>
+                </article>
+                <article class="service-item">
+                    <span class="service-number">02</span>
+                    <h3>Cuidado personal</h3>
+                    <p>Opciones para tu bienestar y tus rutinas de todos los días.</p>
+                </article>
+                <article class="service-item">
+                    <span class="service-number">03</span>
+                    <h3>Atención cercana</h3>
+                    <p>Un equipo dispuesto a orientarte con amabilidad en cada visita.</p>
+                </article>
+            </div>
+        </section>
+        <section class="home-contact">
+            <div>
+                <p class="eyebrow">Visítanos</p>
+                <h2>Estamos en Saltillito.</h2>
+                <p>Calle Lázaro Cárdenas #123, Saltillito, Saltillo, Coahuila</p>
+            </div>
+            <div class="home-contact-details">
+                <p><strong>Horario</strong><br>Lunes a viernes, 8:00 a 20:00</p>
+                <p><strong>Teléfono</strong><br><a href="tel:+521234567890">+52 123 456 7890</a></p>
+                <p><strong>Correo</strong><br><a href="mailto:info@farmaciarosita.com">info@farmaciarosita.com</a></p>
+                <a href="/contact">Más información <span aria-hidden="true">&rarr;</span></a>
+            </div>
+        </section>
+    </main>
+    <%- include('footer'); %>
+</body>
+</html>
